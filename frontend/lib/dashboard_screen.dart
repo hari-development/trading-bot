@@ -1231,10 +1231,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ),
             const SizedBox(height: 10),
             const Text(
-              '💡 Use ws://10.0.2.2:8765 for Android Emulator\n'
-              '   Use ws://localhost:8765 for Web / iOS Sim\n'
-              '   Use ws://<YOUR_IP>:8765 for Physical Device',
-              style: TextStyle(color: Colors.white24, fontSize: 9, height: 1.6),
+              '💡 Cloud Hosting (Railway / Render):\n'
+              '   Use wss://your-app.up.railway.app\n\n'
+              '💡 Local / Emulator:\n'
+              '   Use ws://localhost:8765 (Web / iOS)\n'
+              '   Use ws://10.0.2.2:8765 (Android)',
+              style: TextStyle(color: Colors.white38, fontSize: 10, height: 1.5),
             ),
           ],
         ),

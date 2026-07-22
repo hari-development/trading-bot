@@ -11,6 +11,7 @@ from typing import Set
 
 import websockets
 
+import os
 from core.models import Direction
 from utils.logger import get_logger, register_trade_event_callback
 
@@ -21,7 +22,8 @@ class DashboardServer:
     def __init__(self, engine, host: str = "0.0.0.0", port: int = 8765):
         self.engine = engine
         self.host = host
-        self.port = port
+        env_port = os.environ.get("PORT")
+        self.port = int(env_port) if env_port else port
         self.clients: Set[websockets.WebSocketServerProtocol] = set()
         self.loop = None
         self.thread = None
