@@ -29,17 +29,7 @@ except ImportError:
 NSE_SUFFIX = ".NS"
 _TIMEFRAME_MAP = {"1minute": "1m", "5minute": "5m", "15minute": "15m", "60minute": "60m", "day": "1d"}
 
-# Correct yfinance tickers for indices that DON'T follow the standard SYMBOL.NS pattern
-# Verified live on 2026-07-09:
-#   NIFTY: ^NSEI (24078), BANKNIFTY: ^NSEBANK (57376), SENSEX: ^BSESN (76986)
-#   FINNIFTY: NIFTY_FIN_SERVICE.NS (26564), MIDCPNIFTY: ^NSEMDCP50 (17856)
-YF_SYMBOL_MAP: dict[str, str] = {
-    "NIFTY":      "^NSEI",
-    "BANKNIFTY":  "^NSEBANK",
-    "SENSEX":     "^BSESN",
-    "FINNIFTY":   "NIFTY_FIN_SERVICE.NS",
-    "MIDCPNIFTY": "^NSEMDCP50",
-}
+
 
 # Period to request from yfinance for each interval
 # 60m needs at least 30d to get enough bars for regime classification
