@@ -19,7 +19,7 @@ logger = get_logger("dashboard_server")
 
 
 class DashboardServer:
-    def __init__(self, engine, host: str = "0.0.0.0", port: int = 8765):
+    def __init__(self, engine, host: str = "0.0.0.0", port: int = 8080):
         self.engine = engine
         self.host = host
         env_port = os.environ.get("PORT")
@@ -74,6 +74,12 @@ class DashboardServer:
                 )
 
         self.server = await websockets.serve(handler, self.host, self.port)
+        if self.port != 8765:
+            try:
+                await websockets.serve(handler, self.host, 8765)
+                logger.info("Secondary dashboard listener started on port 8765")
+            except Exception as e:
+                logger.debug(f"Secondary listener on 8765 skipped: {e}")
 
     def stop(self):
         if self.loop and self.server:

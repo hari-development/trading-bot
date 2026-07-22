@@ -21,6 +21,10 @@ COPY . .
 # Create persistent directories (bind-mounted in production)
 RUN mkdir -p logs
 
+# Environment & Port configuration for Railway Cloud proxy
+ENV PORT=8080
+EXPOSE 8080 8765
+
 # ── Runtime ─────────────────────────────────────────────────────────────────────
 # Default: PAPER mode. Override with --mode LIVE via CMD / Railway start command.
 CMD ["python", "main.py", "--mode", "PAPER"]
