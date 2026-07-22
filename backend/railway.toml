@@ -1,0 +1,19 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Railway deployment config
+# Docs: https://docs.railway.app/reference/config-as-code
+# ──────────────────────────────────────────────────────────────────────────────
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Keep the process alive (worker — not a web server)
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# Healthcheck: verify Python process is running
+# (Railway will restart the service if this fails)
+healthcheckPath = ""        # blank = TCP-only check, fine for a worker
+
+# Start command — change to --mode LIVE when ready for real money
+startCommand = "python main.py --mode PAPER"

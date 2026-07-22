@@ -1,0 +1,21 @@
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Logs & runtime state (regenerated on each run)
+logs/*.log
+logs/*.jsonl
+logs/*.json
+logs/KILL_SWITCH
+
+# Secrets — never commit
+.env
+
+# macOS
+.DS_Store
+
+# Large archives
+backend.zip
