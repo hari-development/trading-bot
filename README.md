@@ -219,3 +219,4 @@ tests for any new strategy in `tests/` before enabling it in production.
 - Max drawdown breach requires manual intervention (`state.hard_stop`),
   not an automatic resume — by design, this is not something the bot
   should self-clear.
+# trading-bot
