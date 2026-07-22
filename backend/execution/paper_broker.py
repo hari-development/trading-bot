@@ -29,7 +29,14 @@ except ImportError:
 NSE_SUFFIX = ".NS"
 _TIMEFRAME_MAP = {"1minute": "1m", "5minute": "5m", "15minute": "15m", "60minute": "60m", "day": "1d"}
 
-
+# Verified yfinance tickers for NSE indices (standard SYMBOL.NS doesn't work for indices)
+YF_SYMBOL_MAP: dict[str, str] = {
+    "NIFTY":      "^NSEI",       # Nifty 50
+    "BANKNIFTY":  "^NSEBANK",    # Bank Nifty
+    "SENSEX":     "^BSESN",      # BSE Sensex
+    "FINNIFTY":   "^CNXFIN",     # Nifty Financial Services
+    "MIDCPNIFTY": "^NSEMDCP50",  # Nifty Midcap 50
+}
 
 # Period to request from yfinance for each interval
 # 60m needs at least 30d to get enough bars for regime classification
