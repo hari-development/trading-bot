@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:intl/intl.dart';
@@ -67,13 +66,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         _webSocketUrl = 'wss://trading-bot-production-912b.up.railway.app';
       }
     } else {
-      String host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+      bool isAndroid = defaultTargetPlatform == TargetPlatform.android;
+      String host = isAndroid ? '10.0.2.2' : 'localhost';
       _webSocketUrl = 'ws://$host:8765';
     }
 
-    if (kIsWeb || !Platform.environment.containsKey('FLUTTER_TEST')) {
-      _connectWebSocket();
-    }
+    _connectWebSocket();
   }
 
   @override
