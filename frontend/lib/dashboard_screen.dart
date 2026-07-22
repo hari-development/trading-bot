@@ -60,9 +60,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     super.initState();
     _desktopTabController = TabController(length: 3, vsync: this);
 
-    String host = 'localhost';
-    if (!kIsWeb && Platform.isAndroid) host = '10.0.2.2';
-    _webSocketUrl = 'ws://$host:8765';
+    if (kIsWeb) {
+      if (Uri.base.queryParameters.containsKey('ws')) {
+        _webSocketUrl = Uri.base.queryParameters['ws']!;
+      } else {
+        _webSocketUrl = 'wss://trading-bot-production-912b.up.railway.app';
+      }
+    } else {
+      String host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+      _webSocketUrl = 'ws://$host:8765';
+    }
 
     if (kIsWeb || !Platform.environment.containsKey('FLUTTER_TEST')) {
       _connectWebSocket();
