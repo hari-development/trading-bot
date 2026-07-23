@@ -61,16 +61,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     super.initState();
     _desktopTabController = TabController(length: 3, vsync: this);
 
-    if (kIsWeb) {
-      if (Uri.base.queryParameters.containsKey('ws')) {
-        _webSocketUrl = Uri.base.queryParameters['ws']!;
-      } else {
-        _webSocketUrl = 'wss://trading-bot-production-912b.up.railway.app';
-      }
+    // Use the Railway backend URL by default for all platforms (Web, Desktop, Mobile)
+    if (kIsWeb && Uri.base.queryParameters.containsKey('ws')) {
+      _webSocketUrl = Uri.base.queryParameters['ws']!;
     } else {
-      bool isAndroid = defaultTargetPlatform == TargetPlatform.android;
-      String host = isAndroid ? '10.0.2.2' : 'localhost';
-      _webSocketUrl = 'ws://$host:8765';
+      _webSocketUrl = 'wss://trading-bot-production-912b.up.railway.app';
     }
 
     _connectWebSocket();
