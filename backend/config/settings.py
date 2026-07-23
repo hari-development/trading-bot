@@ -100,7 +100,7 @@ class RiskConfig:
 
     # Concurrent open positions
     max_open_positions: int = 2                   # never hold more than 2 at once
-    max_capital_usage_pct: float = 30.0           # cap total margin used — NOW ENFORCED
+    max_capital_usage_pct: float = 100.0           # increased to allow at least 1 lot to be bought
 
     # Consecutive loss handling (anti-martingale)
     max_consecutive_losses: int = 2               # after this many, force a cooldown
