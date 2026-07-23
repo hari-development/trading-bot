@@ -16,13 +16,18 @@ LOT_SIZES: Dict[str, int] = {
     "FINNIFTY":    40,
     "MIDCPNIFTY":  75,
     "SENSEX":      10,
+    "RELIANCE":    250,
+    "HDFCBANK":    400,
+    "ICICIBANK":   700,
+    "INFY":        400,
+    "TCS":         175,
 }
 
 
 @dataclass
 class RiskConfig:
     # Capital
-    starting_capital: float = 100000.0         # INR (₹1 lakh — minimum viable for 1 NIFTY lot)
+    starting_capital: float = 20000.0          # INR (₹20k — paper mode or option buying)
 
     # Per-trade risk
     max_risk_per_trade_pct: float = 5.0           # % of capital risked per trade (5% for paper mode; lower to 1-2% for live)
@@ -30,10 +35,10 @@ class RiskConfig:
 
     # Daily circuit breakers
     max_daily_loss_pct: float = 2.0               # % of capital → stop trading for the day
-    max_daily_profit_target: float = 5000.0       # INR fixed daily profit target (₹5,000)
+    max_daily_profit_target: float = 3000.0       # INR fixed daily profit target (₹3,000)
     use_fixed_daily_profit_target: bool = True     # Use fixed INR target if True
     max_daily_profit_pct: float = 5.0             # % of capital → fallback daily profit target
-    max_trades_per_day: int = 10
+    max_trades_per_day: int = 30
 
     # Concurrent open positions
     max_open_positions: int = 2                   # never hold more than 2 at once
@@ -58,7 +63,7 @@ class QualityFilterConfig:
     min_confirmations: int = 2                   # min indicators that must agree (EMA-ST base = 2)
     max_atr_pct_of_price: float = 3.0            # reject if ATR% too high (volatility blowout)
     min_avg_volume: int = 10000                  # min 20-period avg volume (liquidity filter)
-    min_win_probability: float = 0.55            # model must estimate at least this
+    min_win_probability: float = 0.45            # lowered to allow more trades
     avoid_first_minutes_after_open: int = 15     # skip opening whipsaw (raised from 5→15)
     avoid_last_minutes_before_close: int = 15    # avoid EOD volatility (raised from 10→15)
     enable_news_filter: bool = True              # block entries during macro events
@@ -129,8 +134,9 @@ class OptionConfig:
 class SystemConfig:
     mode: str = "PAPER"                         # PAPER | LIVE | BACKTEST
     watchlist: List[str] = field(default_factory=lambda: [
-        # Most liquid NSE F&O indices with tight bid-ask spreads
-        "NIFTY", "BANKNIFTY", "FINNIFTY",
+        # Most liquid NSE F&O indices and stocks
+        "NIFTY", "BANKNIFTY", "FINNIFTY", "SENSEX", "MIDCPNIFTY",
+        "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS"
     ])
     market_open: str = "09:15"
     market_close: str = "15:30"
