@@ -41233,7 +41233,8 @@ A.CO.prototype={
 aC(){var s,r=this
 r.aR()
 r.CW=new A.Bp(A.XW(null,0,r),B.bY,3,$.ah())
-if(A.ayx().gIB().aq("ws")){s=A.ayx().gIB().h(0,"ws")
+s=A.ayx().gIB().aq("ws")
+if(s){s=A.ayx().gIB().h(0,"ws")
 s.toString
 r.ch=s}else r.ch="wss://trading-bot-production-912b.up.railway.app"
 r.Cu()},
