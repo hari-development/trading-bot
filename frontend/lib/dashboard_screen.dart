@@ -25,8 +25,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   // Dashboard state
   Map<String, dynamic> _status = {
-    'equity': 20000.0,
-    'starting_equity': 20000.0,
+    'equity': 25000.0,
+    'starting_equity': 25000.0,
     'realized_pnl_today': 0.0,
     'trades_today': 0,
     'winning_trades': 0,
@@ -451,8 +451,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   Widget _buildStatsGrid() {
     final realizedPnl = _num(_status['realized_pnl_today']);
-    final equity = _num(_status['equity'], 20000);
-    final startingEquity = _num(_status['starting_equity'], 20000);
+    final equity = _num(_status['equity'], 25000);
+    final startingEquity = _num(_status['starting_equity'], 25000);
     final winRate = _num(_status['win_rate_pct']);
     final drawdown = _num(_status['drawdown_pct']);
     final consecutiveLoss = _int(_status['consecutive_losses']);

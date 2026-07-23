@@ -125,7 +125,7 @@ def run_backtest(
     symbol: str,
     timeframe: str = "5minute",
     days: int = 365,
-    starting_capital: float = 20000.0,
+    starting_capital: float = 25000.0,
 ) -> dict:
     print(f"\n{'='*60}")
     print(f" BACKTEST: {symbol} | {timeframe} | {days} days")
@@ -267,6 +267,6 @@ if __name__ == "__main__":
     parser.add_argument("--timeframe", default="5minute",
                         choices=["1minute", "5minute", "15minute", "day"])
     parser.add_argument("--days", type=int, default=365, help="Lookback days (max depends on yf)")
-    parser.add_argument("--capital", type=float, default=20000.0, help="Starting capital in INR")
+    parser.add_argument("--capital", type=float, default=25000.0, help="Starting capital in INR")
     args = parser.parse_args()
     run_backtest(args.symbol, args.timeframe, args.days, args.capital)

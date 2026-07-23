@@ -84,7 +84,7 @@ class DatabaseConfig:
 @dataclass
 class RiskConfig:
     # Capital
-    starting_capital: float = 20000.0          # INR (₹20k — paper mode or option buying)
+    starting_capital: float = 25000.0          # INR (₹20k — paper mode or option buying)
 
     # Per-trade risk — FIXED from dangerous 10% → conservative 1.5%
     max_risk_per_trade_pct: float = 1.5           # % of current equity risked per trade
