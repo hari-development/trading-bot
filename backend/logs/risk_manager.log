@@ -178,3 +178,51 @@
 2026-07-23 09:31:56,395 | WARNING  | risk_manager | Trading halted for today: max_daily_profit_hit(5000.00)
 2026-07-23 09:31:56,396 | INFO     | risk_manager | Win registered on TEST (test_strategy): +5000.00. Consecutive wins: 1
 2026-07-23 09:31:56,396 | INFO     | risk_manager | New trading day detected (2026-07-23) — resetting daily profit target & counters, preserving equity/drawdown state.
+2026-07-23 09:58:30,626 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:30,626 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 2
+2026-07-23 09:58:30,626 | WARNING  | risk_manager | Max consecutive losses (2) reached. Cooling down until 10:58:30. No new trades until then — market regime re-evaluated on resume.
+2026-07-23 09:58:30,627 | INFO     | risk_manager | Position size reduced 50% after 2 consecutive losses.
+2026-07-23 09:58:30,627 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:30,628 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:30,628 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 2
+2026-07-23 09:58:30,628 | WARNING  | risk_manager | Max consecutive losses (2) reached. Cooling down until 10:58:30. No new trades until then — market regime re-evaluated on resume.
+2026-07-23 09:58:30,628 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -600.00. Consecutive losses: 1
+2026-07-23 09:58:30,629 | WARNING  | risk_manager | Trading halted for today: max_daily_loss_hit(-600.00)
+2026-07-23 09:58:30,629 | CRITICAL | risk_manager | EMERGENCY STOP TRIGGERED: test
+2026-07-23 09:58:30,629 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:30,630 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 2
+2026-07-23 09:58:30,630 | WARNING  | risk_manager | Max consecutive losses (2) reached. Cooling down until 10:58:30. No new trades until then — market regime re-evaluated on resume.
+2026-07-23 09:58:30,631 | INFO     | risk_manager | Win registered on TEST (test_strategy): +50.00. Consecutive wins: 1
+2026-07-23 09:58:30,631 | INFO     | risk_manager | Consecutive win streak achieved — position sizing restored to normal.
+2026-07-23 09:58:30,631 | INFO     | risk_manager | Win registered on TEST (test_strategy): +50.00. Consecutive wins: 2
+2026-07-23 09:58:30,631 | INFO     | risk_manager | Daily profit target reached/exceeded: ₹5200.00 >= ₹3000.00. Halting trading for today. Trading will restart automatically on the next date.
+2026-07-23 09:58:30,631 | WARNING  | risk_manager | Trading halted for today: max_daily_profit_hit(5200.00)
+2026-07-23 09:58:30,632 | INFO     | risk_manager | Win registered on TEST (test_strategy): +5200.00. Consecutive wins: 1
+2026-07-23 09:58:30,632 | INFO     | risk_manager | Daily profit target reached/exceeded: ₹5000.00 >= ₹3000.00. Halting trading for today. Trading will restart automatically on the next date.
+2026-07-23 09:58:30,632 | WARNING  | risk_manager | Trading halted for today: max_daily_profit_hit(5000.00)
+2026-07-23 09:58:30,632 | INFO     | risk_manager | Win registered on TEST (test_strategy): +5000.00. Consecutive wins: 1
+2026-07-23 09:58:30,632 | INFO     | risk_manager | New trading day detected (2026-07-23) — resetting daily profit target & counters, preserving equity/drawdown state.
+2026-07-23 09:58:53,674 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:53,675 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 2
+2026-07-23 09:58:53,675 | WARNING  | risk_manager | Max consecutive losses (2) reached. Cooling down until 10:58:53. No new trades until then — market regime re-evaluated on resume.
+2026-07-23 09:58:53,675 | INFO     | risk_manager | Position size reduced 50% after 2 consecutive losses.
+2026-07-23 09:58:53,676 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:53,676 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:53,677 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 2
+2026-07-23 09:58:53,677 | WARNING  | risk_manager | Max consecutive losses (2) reached. Cooling down until 10:58:53. No new trades until then — market regime re-evaluated on resume.
+2026-07-23 09:58:53,677 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -600.00. Consecutive losses: 1
+2026-07-23 09:58:53,678 | WARNING  | risk_manager | Trading halted for today: max_daily_loss_hit(-600.00)
+2026-07-23 09:58:53,678 | CRITICAL | risk_manager | EMERGENCY STOP TRIGGERED: test
+2026-07-23 09:58:53,679 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 1
+2026-07-23 09:58:53,679 | INFO     | risk_manager | Loss registered on TEST (test_strategy): -20.00. Consecutive losses: 2
+2026-07-23 09:58:53,679 | WARNING  | risk_manager | Max consecutive losses (2) reached. Cooling down until 10:58:53. No new trades until then — market regime re-evaluated on resume.
+2026-07-23 09:58:53,679 | INFO     | risk_manager | Win registered on TEST (test_strategy): +50.00. Consecutive wins: 1
+2026-07-23 09:58:53,679 | INFO     | risk_manager | Consecutive win streak achieved — position sizing restored to normal.
+2026-07-23 09:58:53,679 | INFO     | risk_manager | Win registered on TEST (test_strategy): +50.00. Consecutive wins: 2
+2026-07-23 09:58:53,680 | INFO     | risk_manager | Daily profit target reached/exceeded: ₹5200.00 >= ₹3000.00. Halting trading for today. Trading will restart automatically on the next date.
+2026-07-23 09:58:53,680 | WARNING  | risk_manager | Trading halted for today: max_daily_profit_hit(5200.00)
+2026-07-23 09:58:53,680 | INFO     | risk_manager | Win registered on TEST (test_strategy): +5200.00. Consecutive wins: 1
+2026-07-23 09:58:53,681 | INFO     | risk_manager | Daily profit target reached/exceeded: ₹5000.00 >= ₹3000.00. Halting trading for today. Trading will restart automatically on the next date.
+2026-07-23 09:58:53,681 | WARNING  | risk_manager | Trading halted for today: max_daily_profit_hit(5000.00)
+2026-07-23 09:58:53,681 | INFO     | risk_manager | Win registered on TEST (test_strategy): +5000.00. Consecutive wins: 1
+2026-07-23 09:58:53,681 | INFO     | risk_manager | New trading day detected (2026-07-23) — resetting daily profit target & counters, preserving equity/drawdown state.

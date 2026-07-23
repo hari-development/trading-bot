@@ -59,8 +59,8 @@ def test_long_option_position_exits_on_underlying_targets():
         underlying_direction=Direction.LONG, underlying_stop_loss=2480.0, underlying_take_profit=2540.0
     )
     
-    # 1. Under TP/SL (e.g. underlying is 2510.0) -> HOLD
-    action = evaluate_position(pos, current_price=2510.0, current_time=datetime.now())
+    # 1. Under TP/SL (e.g. underlying is 2505.0 -> RR 0.25) -> HOLD
+    action = evaluate_position(pos, current_price=2505.0, current_time=datetime.now())
     assert action.action == "HOLD"
     
     # 2. Underlying reaches TP (e.g. underlying is 2545.0) -> EXIT_FULL (TAKE_PROFIT)
@@ -84,8 +84,8 @@ def test_short_option_position_exits_on_underlying_targets():
         underlying_direction=Direction.SHORT, underlying_stop_loss=2520.0, underlying_take_profit=2460.0
     )
     
-    # 1. Under TP/SL (e.g. underlying is 2490.0) -> HOLD
-    action = evaluate_position(pos, current_price=2490.0, current_time=datetime.now())
+    # 1. Under TP/SL (e.g. underlying is 2495.0 -> RR 0.25) -> HOLD
+    action = evaluate_position(pos, current_price=2495.0, current_time=datetime.now())
     assert action.action == "HOLD"
     
     # 2. Underlying reaches TP (e.g. underlying is 2455.0) -> EXIT_FULL (TAKE_PROFIT)

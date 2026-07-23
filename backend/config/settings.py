@@ -30,7 +30,7 @@ class RiskConfig:
     starting_capital: float = 20000.0          # INR (₹20k — paper mode or option buying)
 
     # Per-trade risk
-    max_risk_per_trade_pct: float = 5.0           # % of capital risked per trade (5% for paper mode; lower to 1-2% for live)
+    max_risk_per_trade_pct: float = 10.0          # % of capital risked per trade (Increased to 10% to hit 3k target faster)
     min_risk_reward_ratio: float = 1.5            # reject trades below this
 
     # Daily circuit breakers
@@ -63,7 +63,7 @@ class QualityFilterConfig:
     min_confirmations: int = 2                   # min indicators that must agree (EMA-ST base = 2)
     max_atr_pct_of_price: float = 3.0            # reject if ATR% too high (volatility blowout)
     min_avg_volume: int = 10000                  # min 20-period avg volume (liquidity filter)
-    min_win_probability: float = 0.45            # lowered to allow more trades
+    min_win_probability: float = 0.60            # raised back to 0.60 to avoid low-quality signals causing losses
     avoid_first_minutes_after_open: int = 15     # skip opening whipsaw (raised from 5→15)
     avoid_last_minutes_before_close: int = 15    # avoid EOD volatility (raised from 10→15)
     enable_news_filter: bool = True              # block entries during macro events
@@ -73,11 +73,11 @@ class QualityFilterConfig:
 class TradeManagementConfig:
     atr_sl_multiplier: float = 1.5              # stop-loss = entry ±  ATR × multiplier
     atr_tp_multiplier: float = 3.0             # take-profit target
-    trailing_activation_rr: float = 1.0        # start trailing once trade is +1R
+    trailing_activation_rr: float = 0.8        # start trailing earlier
     trailing_atr_multiplier: float = 1.2
     partial_booking_rr: float = 1.5            # book partial profit at this R multiple
     partial_booking_pct: float = 50.0          # % of position to book
-    breakeven_trigger_rr: float = 1.0          # move SL to breakeven once trade hits this R
+    breakeven_trigger_rr: float = 0.5          # move SL to breakeven faster to protect capital
     max_holding_minutes: int = 180             # time-based exit for intraday
 
 
@@ -126,8 +126,8 @@ class OptionConfig:
     tp_pct: float = 50.0                        # Take profit % on option premium (50%)
     expiry_preference: str = "weekly"           # weekly | monthly
     trail_premium_sl: bool = True               # Trail option premium SL once trade turns profitable
-    premium_trail_activation_pct: float = 15.0  # Activate trailing SL once option premium reaches +15% profit
-    premium_trail_pct: float = 10.0             # Trail premium SL 10% below peak premium
+    premium_trail_activation_pct: float = 10.0  # Activate trailing SL once option premium reaches +10% profit
+    premium_trail_pct: float = 5.0              # Trail premium SL 5% below peak premium
 
 
 @dataclass
