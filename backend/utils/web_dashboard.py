@@ -133,6 +133,26 @@ def get_regime() -> Dict[str, Any]:
     return {"regime": "UNKNOWN", "confidence": 0.0}
 
 
+def get_recent_events(limit: int = 50) -> List[Dict[str, Any]]:
+    events_path = Path("logs/trade_events.jsonl")
+    if not events_path.exists():
+        return []
+    events = []
+    try:
+        with open(events_path, "r") as f:
+            lines = f.readlines()
+        for line in lines[-limit:]:
+            line_str = line.strip()
+            if line_str:
+                try:
+                    events.append(json.loads(line_str))
+                except Exception:
+                    pass
+    except Exception as e:
+        logger.error(f"Failed to read events: {e}")
+    return events
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
@@ -145,6 +165,7 @@ async def websocket_endpoint(websocket: WebSocket):
             "trade_history": get_recent_trades(),
             "regime": get_regime(),
             "system_mode": _engine.broker.__class__.__name__.replace("Broker", "").upper(),
+            "recent_events": get_recent_events(),
         }
         await websocket.send_text(json.dumps(init_state, default=str))
 
