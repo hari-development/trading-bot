@@ -126,7 +126,7 @@ def get_regime() -> Dict[str, Any]:
     if r:
         return {
             "regime": r.regime.value,
-            "adx": r.adx,
+            "adx": r.adx_value,
             "atr_pct": r.atr_pct,
             "confidence": getattr(r, "regime_confidence", 0.0)
         }
