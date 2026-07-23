@@ -41,8 +41,8 @@ class ConfidenceConfig:
     volume_weight: float = 0.10
     price_action_weight: float = 0.15
 
-    min_confidence_threshold: float = 0.60   # minimum to allow entry
-    high_confidence_threshold: float = 0.80  # full position size at this level
+    min_confidence_threshold: float = 0.50   # lowered for more frequent scalps
+    high_confidence_threshold: float = 0.70  # full position size at this level
 
 
 @dataclass
@@ -59,7 +59,7 @@ class TradeScoreConfig:
     htf_alignment_max: int = 15
     confirmation_count_max: int = 15
 
-    min_trade_score: int = 60            # reject if score < 60/100
+    min_trade_score: int = 50            # reject if score < 50/100 (lowered for more trades)
 
 
 @dataclass
@@ -95,8 +95,8 @@ class RiskConfig:
     max_daily_profit_target: float = 3000.0       # INR fixed daily profit target (₹3,000)
     use_fixed_daily_profit_target: bool = True     # Use fixed INR target if True
     max_daily_profit_pct: float = 5.0             # % of capital → fallback daily profit target
-    max_trades_per_day: int = 15                  # reduced from 30 to avoid overtrading
-    max_trades_per_day_per_symbol: int = 2        # per-symbol daily trade cap
+    max_trades_per_day: int = 30                  # increased for scalping
+    max_trades_per_day_per_symbol: int = 5        # per-symbol daily trade cap
 
     # Concurrent open positions
     max_open_positions: int = 2                   # never hold more than 2 at once
@@ -125,23 +125,23 @@ class RiskConfig:
 
 @dataclass
 class QualityFilterConfig:
-    min_confirmations: int = 3                   # raised: need 3 confirmations for quality entries
+    min_confirmations: int = 2                   # lowered: need 2 confirmations for scalping
     max_atr_pct_of_price: float = 3.0            # reject if ATR% too high (volatility blowout)
     min_avg_volume: int = 10000                  # min 20-period avg volume (liquidity filter)
     min_win_probability: float = 0.60            # minimum signal win probability
     avoid_first_minutes_after_open: int = 15     # skip opening whipsaw
     avoid_last_minutes_before_close: int = 15    # avoid EOD volatility
     enable_news_filter: bool = True              # block entries during macro events
-    min_trade_score: int = 60                    # 0-100 quality score gate
+    min_trade_score: int = 50                    # 0-100 quality score gate
 
 
 @dataclass
 class TradeManagementConfig:
-    atr_sl_multiplier: float = 1.5              # stop-loss = entry ±  ATR × multiplier
-    atr_tp_multiplier: float = 3.0             # take-profit target
+    atr_sl_multiplier: float = 1.0              # tighter stop-loss for small trades
+    atr_tp_multiplier: float = 2.0             # smaller take-profit target for scalping
     trailing_activation_rr: float = 0.8        # start trailing earlier
     trailing_atr_multiplier: float = 1.2
-    partial_booking_rr: float = 1.5            # book partial profit at this R multiple
+    partial_booking_rr: float = 1.0            # book partial profit earlier
     partial_booking_pct: float = 50.0          # % of position to book
     breakeven_trigger_rr: float = 0.5          # move SL to breakeven faster to protect capital
     max_holding_minutes: int = 180             # time-based exit for intraday
@@ -172,7 +172,7 @@ class MultiTimeframeConfig:
 
     def __post_init__(self):
         if self.required_timeframes is None:
-            self.required_timeframes = ["15minute", "60minute"]
+            self.required_timeframes = ["15minute"]  # Scalping only needs nearest HTF
 
 
 @dataclass
@@ -180,7 +180,7 @@ class StrategyConfig:
     enabled_strategies: List[str] = field(default_factory=lambda: [
         "ema_supertrend", "vwap_breakout", "rsi_macd_confluence", "opening_range_breakout"
     ])
-    primary_timeframe: str = "5minute"
+    primary_timeframe: str = "3minute"  # Scalping timeframe
     lookback_bars: int = 150
 
 
@@ -188,12 +188,12 @@ class StrategyConfig:
 class OptionConfig:
     enabled: bool = True                        # Buy options instead of direct equities
     strike_selection: str = "ITM1"              # ITM1 (In-The-Money 1 strike, higher delta ~0.65) | ATM | OTM1
-    sl_pct: float = 30.0                        # Stop loss % on option premium (widened to 30%)
-    tp_pct: float = 50.0                        # Take profit % on option premium
+    sl_pct: float = 15.0                        # Tighter Stop loss % on option premium
+    tp_pct: float = 25.0                        # Smaller Take profit % on option premium (scalp)
     expiry_preference: str = "weekly"           # weekly | monthly
     trail_premium_sl: bool = True               # Trail option premium SL once trade turns profitable
-    premium_trail_activation_pct: float = 15.0  # Activate trailing SL once option premium reaches +15% profit
-    premium_trail_pct: float = 8.0              # Trail 8% below peak premium
+    premium_trail_activation_pct: float = 10.0  # Activate trailing SL earlier
+    premium_trail_pct: float = 5.0              # Tighter trail
 
 
 @dataclass
