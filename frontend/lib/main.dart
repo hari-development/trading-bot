@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'dashboard_screen.dart';
 
 void main() {
   runApp(const TradingBotDashboardApp());
+}
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    // Explicitly excluding trackpad to avoid framework assertion bug
+  };
 }
 
 class TradingBotDashboardApp extends StatelessWidget {
@@ -12,6 +22,7 @@ class TradingBotDashboardApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Antigravity Trading Dashboard',
+      scrollBehavior: AppScrollBehavior(),
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData(

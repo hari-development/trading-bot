@@ -56,6 +56,7 @@ class TradingEngine:
         self.open_positions: Dict[str, Position] = self._load_positions()
         self.closed_trades: List[dict] = self._load_closed_trades()
         self._running = False
+        self.current_regime = None
 
         logger.info(
             f"Engine initialized. Mode={system_config.mode}, "
@@ -280,6 +281,9 @@ class TradingEngine:
 
         # Primary timeframe regime
         regime = classify_regime(df)
+        
+        # Track the latest evaluated regime globally for the dashboard
+        self.current_regime = regime
 
         # Multi-timeframe regimes (fetched once per symbol, shared across strategies)
         mtf_regimes = self._get_mtf_regimes(symbol) if mtf_config.enabled else {}

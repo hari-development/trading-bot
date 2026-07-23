@@ -65,7 +65,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     if (kIsWeb && Uri.base.queryParameters.containsKey('ws')) {
       _webSocketUrl = Uri.base.queryParameters['ws']!;
     } else {
-      _webSocketUrl = 'wss://trading-bot-production-912b.up.railway.app';
+      _webSocketUrl = 'wss://trading-bot-production-912b.up.railway.app/ws';
     }
 
     _connectWebSocket();
