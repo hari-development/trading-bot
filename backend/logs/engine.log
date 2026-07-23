@@ -1052,3 +1052,34 @@
 2026-07-23 13:25:53,418 | INFO     | engine | Engine initialized. Mode=PAPER, Strategies=['ema_supertrend', 'vwap_breakout', 'rsi_macd_confluence', 'opening_range_breakout'], Watchlist=['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'SENSEX', 'MIDCPNIFTY', 'RELIANCE', 'HDFCBANK', 'ICICIBANK', 'INFY', 'TCS']
 2026-07-23 13:25:53,418 | INFO     | engine | === Trading engine started (autonomous mode) ===
 2026-07-23 13:25:53,419 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:26:13,129 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:26:30,593 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:26:47,822 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:27:05,117 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:27:22,585 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:27:39,906 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:27:57,157 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:28:14,526 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:28:31,852 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:28:49,603 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:29:07,315 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:29:30,111 | INFO     | engine | Engine initialized. Mode=PAPER, Strategies=['ema_supertrend', 'vwap_breakout', 'rsi_macd_confluence', 'opening_range_breakout'], Watchlist=['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'SENSEX', 'MIDCPNIFTY', 'RELIANCE', 'HDFCBANK', 'ICICIBANK', 'INFY', 'TCS']
+2026-07-23 13:29:30,111 | INFO     | engine | === Trading engine started (autonomous mode) ===
+2026-07-23 13:29:30,111 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:29:49,068 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:30:05,772 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:30:22,578 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:30:39,547 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:30:56,156 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:31:13,070 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:31:29,993 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:31:46,898 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:32:03,829 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:32:20,588 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:32:37,422 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:33:09,085 | INFO     | engine | Engine initialized. Mode=PAPER, Strategies=['ema_supertrend', 'vwap_breakout', 'rsi_macd_confluence', 'opening_range_breakout'], Watchlist=['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'SENSEX', 'MIDCPNIFTY', 'RELIANCE', 'HDFCBANK', 'ICICIBANK', 'INFY', 'TCS']
+2026-07-23 13:33:09,086 | INFO     | engine | === Trading engine started (autonomous mode) ===
+2026-07-23 13:33:09,086 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:33:19,075 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:33:25,465 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
+2026-07-23 13:33:36,359 | INFO     | engine | Scanning 10 symbols. Open positions: 0/2. Allowed to trade: True (OK)
