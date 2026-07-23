@@ -246,15 +246,15 @@ class TradingEngine:
         agreeing = 0
         for tf, snapshot in mtf_regimes.items():
             if signal.direction == Direction.LONG:
-                if snapshot.regime == Regime.TRENDING_UP:
+                if snapshot.regime in (Regime.TRENDING_UP, Regime.GAP_UP):
                     agreeing += 1
-                elif snapshot.regime == Regime.TRENDING_DOWN:
+                elif snapshot.regime in (Regime.TRENDING_DOWN, Regime.GAP_DOWN):
                     # Hard veto — opposing strong trend on a higher TF
                     return False, f"mtf_opposing_downtrend_on_{tf}"
             else:  # SHORT
-                if snapshot.regime == Regime.TRENDING_DOWN:
+                if snapshot.regime in (Regime.TRENDING_DOWN, Regime.GAP_DOWN):
                     agreeing += 1
-                elif snapshot.regime == Regime.TRENDING_UP:
+                elif snapshot.regime in (Regime.TRENDING_UP, Regime.GAP_UP):
                     return False, f"mtf_opposing_uptrend_on_{tf}"
 
         if agreeing < mtf_config.min_agreeing_timeframes:

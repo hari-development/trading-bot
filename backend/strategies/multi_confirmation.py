@@ -172,11 +172,18 @@ def check_volume(df: pd.DataFrame, min_multiplier: float = 1.2) -> Tuple[bool, f
     """Volume confirmation: current bar volume above N× average."""
     if len(df) < 20:
         return False, 0.0
+    
+    if "volume" not in df.columns:
+        return True, 0.5
+
     vol_avg = avg_volume(df, 20)
     last_vol = float(df["volume"].iloc[-1])
     last_avg = float(vol_avg.iloc[-1])
+    
     if pd.isna(last_avg) or last_avg == 0:
-        return False, 0.0
+        # If volume is 0 on average, it's likely an index without volume data.
+        # Bypass the hard gate with a neutral score.
+        return True, 0.5
     
     ratio = last_vol / last_avg
     if ratio >= 2.0:
