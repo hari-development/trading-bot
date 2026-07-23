@@ -2,7 +2,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class Direction(str, Enum):
@@ -33,8 +33,12 @@ class Signal:
     take_profit: float
     confirmations: List[str] = field(default_factory=list)   # which sub-checks agreed
     win_probability: float = 0.5
-    indicator_snapshot: Dict[str, float] = field(default_factory=dict)
+    indicator_snapshot: Dict[str, Any] = field(default_factory=dict)
     regime: Optional[str] = None
+    # --- Phase 2 additions (AI + scoring layer) ---
+    confidence_score: float = 0.0          # 0.0–1.0 weighted confidence score
+    trade_score: int = 0                   # 0–100 trade quality score
+    higher_tf_alignment: str = ""          # "ALIGNED" | "NEUTRAL" | "OPPOSING"
 
     @property
     def risk_per_share(self) -> float:
@@ -113,3 +117,77 @@ class ClosedTrade:
     pnl: float
     pnl_pct: float
     entry_reason: str = ""
+
+
+@dataclass
+class TradeJournalEntry:
+    """
+    Extended trade record for adaptive learning and analytics.
+    Captures full context at time of entry and exit.
+    """
+    # Core trade identifiers
+    trade_id: str = ""
+    symbol: str = ""
+    direction: str = ""
+    strategy_name: str = ""
+
+    # Entry context
+    entry_price: float = 0.0
+    entry_time: str = ""
+    entry_reason: str = ""
+    confidence_score: float = 0.0
+    trade_score: int = 0
+    market_regime: str = ""
+    higher_tf_alignment: str = ""
+    indicator_snapshot: Dict[str, Any] = field(default_factory=dict)
+    confirmations: List[str] = field(default_factory=list)
+
+    # Position details
+    quantity: int = 0
+    stop_loss: float = 0.0
+    take_profit: float = 0.0
+    risk_amount: float = 0.0
+    risk_reward_ratio: float = 0.0
+
+    # Exit context
+    exit_price: float = 0.0
+    exit_time: str = ""
+    exit_reason: str = ""
+    pnl: float = 0.0
+    pnl_pct: float = 0.0
+    holding_minutes: float = 0.0
+    max_favorable_excursion: float = 0.0   # best price reached
+    max_adverse_excursion: float = 0.0     # worst price reached
+
+    @classmethod
+    def from_closed_trade(cls, trade: "ClosedTrade", signal: Optional["Signal"] = None) -> "TradeJournalEntry":
+        """Convenience factory to create from a ClosedTrade + original Signal."""
+        import uuid
+        duration = (trade.exit_time - trade.entry_time).total_seconds() / 60 if trade.entry_time and trade.exit_time else 0.0
+        entry = cls(
+            trade_id=str(uuid.uuid4())[:12],
+            symbol=trade.symbol,
+            direction=trade.direction.value if hasattr(trade.direction, 'value') else str(trade.direction),
+            strategy_name=trade.strategy_name,
+            entry_price=trade.entry_price,
+            entry_time=trade.entry_time.isoformat() if trade.entry_time else "",
+            exit_price=trade.exit_price,
+            exit_time=trade.exit_time.isoformat() if trade.exit_time else "",
+            exit_reason=trade.exit_reason.value if hasattr(trade.exit_reason, 'value') else str(trade.exit_reason),
+            pnl=trade.pnl,
+            pnl_pct=trade.pnl_pct,
+            holding_minutes=duration,
+            quantity=trade.quantity,
+            entry_reason=trade.entry_reason,
+        )
+        if signal:
+            entry.confidence_score = signal.confidence_score
+            entry.trade_score = signal.trade_score
+            entry.market_regime = signal.regime or ""
+            entry.higher_tf_alignment = signal.higher_tf_alignment
+            entry.indicator_snapshot = signal.indicator_snapshot
+            entry.confirmations = signal.confirmations
+            entry.risk_reward_ratio = signal.risk_reward_ratio
+            entry.stop_loss = signal.stop_loss
+            entry.take_profit = signal.take_profit
+        return entry

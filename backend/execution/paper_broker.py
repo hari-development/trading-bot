@@ -173,12 +173,14 @@ class PaperBroker(Broker):
         else:
             strike = atm_strike
         
-        # Calculate next Thursday expiry
+        # Calculate next Thursday expiry (Thursday = weekday 3 in 0=Mon convention)
         import datetime as dt
         today = dt.date.today()
-        days_ahead = 3 - today.weekday()
-        if days_ahead < 0:
-            days_ahead += 7
+        # FIXED: use % 7 to prevent negative days_ahead on Fri (4), Sat (5), Sun (6)
+        days_ahead = (3 - today.weekday()) % 7
+        if days_ahead == 0:
+            # Today is Thursday — check if market is still open, else move to next week
+            pass  # keep today as expiry
         next_thursday = today + dt.timedelta(days=days_ahead)
         expiry_str = next_thursday.strftime("%Y-%m-%d")
         expiry_symbol_str = next_thursday.strftime("%y%b%d").upper()

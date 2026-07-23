@@ -119,3 +119,160 @@ def opening_range(df: pd.DataFrame, minutes: int = 15):
 
 def avg_volume(df: pd.DataFrame, period: int = 20) -> pd.Series:
     return df["volume"].rolling(period).mean()
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: Enhanced Indicator Library
+# ---------------------------------------------------------------------------
+
+def stochastic_rsi(series: pd.Series, rsi_period: int = 14, stoch_period: int = 14) -> pd.Series:
+    """Stochastic RSI — normalizes RSI into a 0-100 range oscillator.
+    More sensitive than plain RSI for identifying momentum shifts."""
+    rsi_values = rsi(series, rsi_period)
+    rsi_min = rsi_values.rolling(stoch_period).min()
+    rsi_max = rsi_values.rolling(stoch_period).max()
+    denom = (rsi_max - rsi_min).replace(0, np.nan)
+    return (rsi_values - rsi_min) / denom * 100
+
+
+def williams_r(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Williams %R — overbought/oversold oscillator.
+    Values: -80 to -100 = oversold (bullish), -0 to -20 = overbought (bearish)."""
+    highest_high = df["high"].rolling(period).max()
+    lowest_low = df["low"].rolling(period).min()
+    denom = (highest_high - lowest_low).replace(0, np.nan)
+    return (highest_high - df["close"]) / denom * -100
+
+
+def obv(df: pd.DataFrame) -> pd.Series:
+    """On-Balance Volume — cumulative volume indicator for trend confirmation.
+    Rising OBV = accumulation (bullish); Falling OBV = distribution (bearish)."""
+    direction = np.sign(df["close"].diff())
+    return (direction * df["volume"]).fillna(0).cumsum()
+
+
+def heikin_ashi(df: pd.DataFrame) -> pd.DataFrame:
+    """Heikin-Ashi candles — smoothed price bars that filter market noise.
+    Returns DataFrame with columns: ha_open, ha_high, ha_low, ha_close."""
+    ha = pd.DataFrame(index=df.index)
+    ha["ha_close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
+    ha_open = [(df["open"].iloc[0] + df["close"].iloc[0]) / 2]
+    for i in range(1, len(df)):
+        ha_open.append((ha_open[i - 1] + ha["ha_close"].iloc[i - 1]) / 2)
+    ha["ha_open"] = ha_open
+    ha["ha_high"] = pd.concat([df["high"], ha["ha_open"], ha["ha_close"]], axis=1).max(axis=1)
+    ha["ha_low"] = pd.concat([df["low"], ha["ha_open"], ha["ha_close"]], axis=1).min(axis=1)
+    return ha
+
+
+def detect_swing_levels(df: pd.DataFrame, lookback: int = 5) -> dict:
+    """Detects recent swing highs and lows as support/resistance levels.
+    Returns dict with 'swing_highs' and 'swing_lows' as sorted lists of prices."""
+    closes = df["close"].values
+    highs = df["high"].values
+    lows = df["low"].values
+    swing_highs = []
+    swing_lows = []
+    for i in range(lookback, len(df) - lookback):
+        if highs[i] == max(highs[i - lookback:i + lookback + 1]):
+            swing_highs.append(float(highs[i]))
+        if lows[i] == min(lows[i - lookback:i + lookback + 1]):
+            swing_lows.append(float(lows[i]))
+    return {
+        "swing_highs": sorted(set(swing_highs), reverse=True)[:5],
+        "swing_lows": sorted(set(swing_lows))[:5],
+    }
+
+
+def detect_order_blocks(df: pd.DataFrame, lookback: int = 10) -> list:
+    """ICT Order Block detection — finds institutional supply/demand zones.
+    An order block is the last up/down candle before a significant move.
+    Returns list of dicts: {type, high, low, bar_idx}."""
+    blocks = []
+    if len(df) < lookback + 3:
+        return blocks
+    for i in range(lookback, len(df) - 2):
+        # Bullish order block: last bearish candle before a strong bullish impulse
+        if (df["close"].iloc[i] < df["open"].iloc[i]  # current bar is bearish
+                and df["close"].iloc[i + 1] > df["open"].iloc[i + 1]   # next bar bullish
+                and df["close"].iloc[i + 1] > df["high"].iloc[i]):      # strong bullish break
+            blocks.append({
+                "type": "BULLISH_OB",
+                "high": float(df["high"].iloc[i]),
+                "low": float(df["low"].iloc[i]),
+                "bar_idx": i,
+            })
+        # Bearish order block: last bullish candle before a strong bearish impulse
+        elif (df["close"].iloc[i] > df["open"].iloc[i]
+              and df["close"].iloc[i + 1] < df["open"].iloc[i + 1]
+              and df["close"].iloc[i + 1] < df["low"].iloc[i]):
+            blocks.append({
+                "type": "BEARISH_OB",
+                "high": float(df["high"].iloc[i]),
+                "low": float(df["low"].iloc[i]),
+                "bar_idx": i,
+            })
+    return blocks[-5:]  # return most recent 5
+
+
+def detect_fair_value_gaps(df: pd.DataFrame) -> list:
+    """ICT Fair Value Gap (FVG) detection — identifies price imbalance zones.
+    Bullish FVG: candle[i-1].high < candle[i+1].low (gap between candles i-1 and i+1)
+    Bearish FVG: candle[i-1].low > candle[i+1].high
+    Returns list of dicts: {type, high, low, bar_idx}."""
+    fvgs = []
+    if len(df) < 3:
+        return fvgs
+    for i in range(1, len(df) - 1):
+        prev_high = df["high"].iloc[i - 1]
+        prev_low = df["low"].iloc[i - 1]
+        next_high = df["high"].iloc[i + 1]
+        next_low = df["low"].iloc[i + 1]
+        if prev_high < next_low:   # bullish FVG
+            fvgs.append({
+                "type": "BULLISH_FVG",
+                "high": float(next_low),
+                "low": float(prev_high),
+                "bar_idx": i,
+            })
+        elif prev_low > next_high:  # bearish FVG
+            fvgs.append({
+                "type": "BEARISH_FVG",
+                "high": float(prev_low),
+                "low": float(next_high),
+                "bar_idx": i,
+            })
+    return fvgs[-5:]  # most recent 5
+
+
+def candle_pattern(df: pd.DataFrame) -> dict:
+    """Detects key price action candle patterns on the last 2 bars.
+    Returns dict of detected patterns with True/False values."""
+    if len(df) < 2:
+        return {}
+    i = -1
+    prev = -2
+    o, h, l, c = df["open"].iloc[i], df["high"].iloc[i], df["low"].iloc[i], df["close"].iloc[i]
+    p_o, p_h, p_l, p_c = df["open"].iloc[prev], df["high"].iloc[prev], df["low"].iloc[prev], df["close"].iloc[prev]
+    body = abs(c - o)
+    candle_range = h - l
+    prev_body = abs(p_c - p_o)
+    prev_range = p_h - p_l
+
+    is_bullish = c > o
+    is_bearish = c < o
+    body_ratio = body / candle_range if candle_range > 0 else 0
+    upper_wick = (h - max(o, c)) / candle_range if candle_range > 0 else 0
+    lower_wick = (min(o, c) - l) / candle_range if candle_range > 0 else 0
+
+    return {
+        "hammer": lower_wick >= 0.6 and body_ratio <= 0.3 and upper_wick <= 0.1,
+        "shooting_star": upper_wick >= 0.6 and body_ratio <= 0.3 and lower_wick <= 0.1,
+        "bullish_engulfing": is_bullish and p_c < p_o and c > p_o and o < p_c,
+        "bearish_engulfing": is_bearish and p_c > p_o and c < p_o and o > p_c,
+        "doji": body_ratio <= 0.1,
+        "strong_bullish": is_bullish and body_ratio >= 0.7,
+        "strong_bearish": is_bearish and body_ratio >= 0.7,
+        "pin_bar_bull": lower_wick >= 0.5 and body_ratio <= 0.4,
+        "pin_bar_bear": upper_wick >= 0.5 and body_ratio <= 0.4,
+    }

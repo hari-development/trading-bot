@@ -10,10 +10,12 @@ change so a restart doesn't reset the day's loss count to zero.
 """
 import json
 import os
+import threading
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, date, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import Deque, List, Optional
 
 from config.settings import risk_config
 from core.models import ClosedTrade, Signal
@@ -51,7 +53,10 @@ class DayState:
 
 class RiskManager:
     def __init__(self):
+        self._lock = threading.RLock()  # thread-safe state access
         self.state = self._load_or_init_state()
+        # Tracks recent loss timestamps for revenge-trading guard
+        self._recent_loss_times: Deque[datetime] = deque(maxlen=20)
 
     # ---------- persistence ----------
     def _load_or_init_state(self) -> DayState:
@@ -81,7 +86,8 @@ class RiskManager:
 
     def _persist(self):
         STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        STATE_FILE.write_text(self.state.to_json())
+        with self._lock:
+            STATE_FILE.write_text(self.state.to_json())
 
     # ---------- kill switch ----------
     def kill_switch_active(self) -> bool:
@@ -105,7 +111,7 @@ class RiskManager:
             self._persist()
 
     def get_daily_profit_target(self) -> float:
-        if getattr(risk_config, "use_fixed_daily_profit_target", True) and getattr(risk_config, "max_daily_profit_target", 5000.0) > 0:
+        if risk_config.use_fixed_daily_profit_target and risk_config.max_daily_profit_target > 0:
             return risk_config.max_daily_profit_target
         return self.state.starting_equity * risk_config.max_daily_profit_pct / 100
 
@@ -130,7 +136,8 @@ class RiskManager:
         if self.state.trades_today >= risk_config.max_trades_per_day:
             return False, "MAX_TRADES_PER_DAY_REACHED"
 
-        daily_loss_limit = -abs(self.state.starting_equity * risk_config.max_daily_loss_pct / 100)
+        # FIXED: use current_equity for daily loss limit, not starting_equity
+        daily_loss_limit = -abs(self.state.current_equity * risk_config.max_daily_loss_pct / 100)
         if self.state.realized_pnl_today <= daily_loss_limit:
             self._shutdown_day(f"max_daily_loss_hit({self.state.realized_pnl_today:.2f})")
             return False, "DAILY_LOSS_LIMIT_HIT"
@@ -162,26 +169,50 @@ class RiskManager:
         logger.warning(f"Trading halted for today: {reason}")
 
     # ---------- position sizing (anti-martingale) ----------
-    def calculate_position_size(self, signal: Signal, regime: RegimeSnapshot) -> int:
+    def calculate_position_size(
+        self, signal: Signal, regime: RegimeSnapshot, confidence_score: float = 0.0
+    ) -> int:
         """
-        Base risk = max_risk_per_trade_pct of current equity.
-        Size is REDUCED after consecutive losses, restored only after a
-        run of wins — the opposite of martingale doubling. Never scales
-        UP after a loss, ever.
-        """
-        risk_amount = self.state.current_equity * risk_config.max_risk_per_trade_pct / 100
+        Confidence-scaled anti-martingale position sizing.
 
-        if self.state.consecutive_losses >= risk_config.losses_before_size_reduction:
+        Base risk = max_risk_per_trade_pct × current equity
+        Adjustments:
+          1. Confidence multiplier: 0.5x-1.0x based on signal quality
+          2. Anti-martingale: reduce 50% after N consecutive losses
+          3. High-volatility trim: reduce 25% when ATR% > 2.0
+        """
+        with self._lock:
+            base_risk = self.state.current_equity * risk_config.max_risk_per_trade_pct / 100
+
+        # 1. Confidence-scaled sizing (50-100% of base risk)
+        from config.settings import confidence_config
+        if confidence_score >= confidence_config.high_confidence_threshold:
+            confidence_multiplier = 1.0     # full size for high-confidence
+        elif confidence_score >= confidence_config.min_confidence_threshold:
+            lo = confidence_config.min_confidence_threshold
+            hi = confidence_config.high_confidence_threshold
+            confidence_multiplier = 0.5 + 0.5 * (confidence_score - lo) / (hi - lo)
+        else:
+            confidence_multiplier = 0.5     # minimum size if below threshold (shouldn't reach here)
+
+        risk_amount = base_risk * confidence_multiplier
+
+        # 2. Anti-martingale: size reduction after consecutive losses
+        with self._lock:
+            consecutive_losses = self.state.consecutive_losses
+        if consecutive_losses >= risk_config.losses_before_size_reduction:
             reduction = risk_config.size_reduction_after_loss_pct / 100
             risk_amount *= (1 - reduction)
             logger.info(
                 f"Position size reduced {reduction * 100:.0f}% after "
-                f"{self.state.consecutive_losses} consecutive losses."
+                f"{consecutive_losses} consecutive losses."
             )
 
-        # further trim in high-volatility-adjacent conditions
+        # 3. Volatility trim
         if regime.regime in (Regime.TRENDING_UP, Regime.TRENDING_DOWN) and regime.atr_pct > 2.0:
             risk_amount *= 0.75
+        if regime.regime == Regime.HIGH_VOLATILITY:
+            risk_amount *= 0.5  # extra caution in volatile regime
 
         if signal.risk_per_share <= 0:
             return 0
@@ -189,16 +220,66 @@ class RiskManager:
         qty = int(risk_amount // signal.risk_per_share)
         return max(qty, 0)
 
+    def check_capital_usage(self, new_trade_value: float) -> tuple[bool, str]:
+        """
+        Enforces max_capital_usage_pct by checking if adding the new trade
+        would exceed the configured capital usage limit.
+        Previously this was configured but never enforced — now it is.
+
+        Args:
+            new_trade_value: estimated trade value (entry_price × quantity)
+        Returns:
+            (allowed: bool, reason: str)
+        """
+        with self._lock:
+            equity = self.state.current_equity
+        max_usage = equity * risk_config.max_capital_usage_pct / 100
+        if new_trade_value > max_usage:
+            return False, (
+                f"capital_usage_would_exceed_limit("
+                f"trade_value={new_trade_value:.0f}, "
+                f"max_allowed={max_usage:.0f})"
+            )
+        return True, "OK"
+
+    def check_revenge_trading(self) -> tuple[bool, str]:
+        """
+        Revenge trading guard: if more than max_losses_per_hour losses occurred
+        in the last hour, force an extended cooldown.
+        """
+        if not hasattr(risk_config, "max_losses_per_hour"):
+            return True, "OK"
+        now = datetime.now()
+        one_hour_ago = now - timedelta(hours=1)
+        recent_losses = sum(1 for t in self._recent_loss_times if t > one_hour_ago)
+        if recent_losses >= risk_config.max_losses_per_hour:
+            cooldown_end = now + timedelta(minutes=risk_config.revenge_cooldown_minutes)
+            with self._lock:
+                self.state.cooldown_until = cooldown_end.isoformat()
+                self._persist()
+            logger.warning(
+                f"REVENGE TRADING GUARD: {recent_losses} losses in 1 hour. "
+                f"2-hour cooldown activated until {cooldown_end.strftime('%H:%M')}."
+            )
+            return False, f"REVENGE_TRADING_COOLDOWN({recent_losses}_losses_in_1h)"
+        return True, "OK"
+
     def validate_risk_reward(self, signal: Signal) -> bool:
         return signal.risk_reward_ratio >= risk_config.min_risk_reward_ratio
 
     # ---------- post-trade update: "intelligent recovery" state machine ----------
     def register_closed_trade(self, trade: ClosedTrade):
-        self._check_day_rollover()
-        self.state.realized_pnl_today += trade.pnl
-        self.state.current_equity += trade.pnl
-        self.state.peak_equity = max(self.state.peak_equity, self.state.current_equity)
-        self.state.trades_today += 1
+        with self._lock:
+            self._check_day_rollover()
+            self.state.realized_pnl_today += trade.pnl
+            self.state.current_equity += trade.pnl
+            self.state.peak_equity = max(self.state.peak_equity, self.state.current_equity)
+            self.state.trades_today += 1
+
+            # Track loss timestamps for revenge trading guard
+            if trade.pnl < 0:
+                self._recent_loss_times.append(datetime.now())
+
 
         daily_profit_target = self.get_daily_profit_target()
         if self.state.realized_pnl_today >= daily_profit_target and not self.state.shutdown_for_day:

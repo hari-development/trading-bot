@@ -39,7 +39,7 @@ from execution.broker_base import Broker
 from execution.factory import get_broker
 from risk.risk_manager import RiskManager
 from strategies.registry import load_enabled_strategies
-from utils.dashboard_server import DashboardServer
+from utils.web_dashboard import DashboardServer
 from utils.logger import get_logger, log_trade_event
 
 logger = get_logger("engine")
@@ -184,6 +184,11 @@ class TradingEngine:
         if not can_trade:
             if gate_reason == "KILL_SWITCH_ACTIVE":
                 self._flatten_all_positions(ExitReason.KILL_SWITCH)
+            return
+
+        no_revenge, rev_reason = self.risk_manager.check_revenge_trading()
+        if not no_revenge:
+            logger.info(f"Revenge trading guard active: {rev_reason}. Skipping entry scan.")
             return
 
         # Check concurrent position limit
@@ -351,8 +356,23 @@ class TradingEngine:
                 return
 
             # Risk-based position sizing on option premium
+            # Risk-based position sizing on option premium with confidence scaling
             current_equity = self.risk_manager.state.current_equity
-            risk_amount = current_equity * risk_config.max_risk_per_trade_pct / 100.0
+            base_risk = current_equity * risk_config.max_risk_per_trade_pct / 100.0
+            
+            # Apply confidence multiplier
+            from config.settings import confidence_config
+            conf = getattr(signal, "confidence_score", 0.0)
+            if conf >= confidence_config.high_confidence_threshold:
+                conf_mult = 1.0
+            elif conf >= confidence_config.min_confidence_threshold:
+                lo = confidence_config.min_confidence_threshold
+                hi = confidence_config.high_confidence_threshold
+                conf_mult = 0.5 + 0.5 * (conf - lo) / (hi - lo)
+            else:
+                conf_mult = 0.5
+                
+            risk_amount = base_risk * conf_mult
             option_risk_per_share = option_price * option_config.sl_pct / 100.0
 
             # Use centralised lot sizes; default to 1 if symbol not mapped
@@ -370,7 +390,9 @@ class TradingEngine:
             trade_sl = round(option_price * (1.0 - option_config.sl_pct / 100.0), 2)
             trade_tp = round(option_price * (1.0 + option_config.tp_pct / 100.0), 2)
         else:
-            qty = self.risk_manager.calculate_position_size(signal, regime)
+            qty = self.risk_manager.calculate_position_size(
+                signal, regime, confidence_score=getattr(signal, "confidence_score", 0.0)
+            )
             if qty <= 0:
                 log_trade_event("SIGNAL_REJECTED", {
                     "symbol": signal.symbol,
@@ -383,7 +405,20 @@ class TradingEngine:
             trade_direction = signal.direction
             trade_entry = signal.entry_price
             trade_sl = signal.stop_loss
+            trade_sl = signal.stop_loss
             trade_tp = signal.take_profit
+
+        # Enforce max capital usage limit
+        estimated_trade_value = trade_entry * qty
+        cap_ok, cap_reason = self.risk_manager.check_capital_usage(estimated_trade_value)
+        if not cap_ok:
+            log_trade_event("SIGNAL_REJECTED", {
+                "symbol": trade_symbol,
+                "strategy": signal.strategy_name,
+                "reason": cap_reason,
+            })
+            logger.warning(f"Order rejected by capital usage limit: {cap_reason}")
+            return
 
         try:
             order_id = self.broker.place_order(trade_symbol, trade_direction, qty)
@@ -409,6 +444,9 @@ class TradingEngine:
                 underlying_stop_loss=signal.stop_loss,
                 underlying_take_profit=signal.take_profit,
             )
+            # Attach Phase 13 fields to position for dashboard visualization
+            position.confidence_score = getattr(signal, "confidence_score", 0.0)
+            position.trade_score = getattr(signal, "trade_score", 0)
         else:
             position = Position(
                 symbol=trade_symbol,
@@ -421,6 +459,8 @@ class TradingEngine:
                 strategy_name=signal.strategy_name,
                 order_id=order_id,
             )
+            position.confidence_score = getattr(signal, "confidence_score", 0.0)
+            position.trade_score = getattr(signal, "trade_score", 0)
 
         self.open_positions[trade_symbol] = position
         self._save_positions()

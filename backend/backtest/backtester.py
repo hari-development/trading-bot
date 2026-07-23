@@ -75,10 +75,64 @@ class BacktestResult:
             "profit_factor": round(self.profit_factor, 2) if self.profit_factor != float("inf") else "inf",
             "max_drawdown_pct": round(self.max_drawdown_pct, 2),
             "sharpe_ratio": round(self.sharpe_ratio, 2),
+            "sortino_ratio": round(self.sortino_ratio, 2) if self.sortino_ratio != float("inf") else "inf",
+            "calmar_ratio": round(self.calmar_ratio, 2) if self.calmar_ratio != float("inf") else "inf",
             "total_pnl": round(self.total_pnl, 2),
             "ending_capital": round(self.starting_capital + self.total_pnl, 2),
             "return_pct": round(self.total_pnl / self.starting_capital * 100, 2),
+            "avg_holding_minutes": self.avg_holding_minutes,
         }
+
+    @property
+    def sortino_ratio(self) -> float:
+        """Sortino ratio — only penalizes downside volatility (better than Sharpe for trading)."""
+        if len(self.trades) < 2:
+            return 0.0
+        returns = np.array([t.pnl_pct for t in self.trades])
+        downside = returns[returns < 0]
+        if len(downside) == 0 or downside.std() == 0:
+            return float("inf") if returns.mean() > 0 else 0.0
+        return float(returns.mean() / downside.std() * np.sqrt(252))
+
+    @property
+    def calmar_ratio(self) -> float:
+        """Calmar ratio — annual return / max drawdown."""
+        if self.max_drawdown_pct == 0:
+            return float("inf")
+        return round(self.total_pnl / self.starting_capital * 100 / self.max_drawdown_pct, 3)
+
+    @property
+    def avg_holding_minutes(self) -> float:
+        """Average holding duration in minutes."""
+        if not self.trades:
+            return 0.0
+        durations = []
+        for t in self.trades:
+            try:
+                if t.entry_time and t.exit_time:
+                    delta = (t.exit_time - t.entry_time).total_seconds() / 60
+                    durations.append(delta)
+            except Exception:
+                pass
+        return round(sum(durations) / len(durations), 1) if durations else 0.0
+
+    @property
+    def monthly_returns(self) -> dict:
+        """P&L broken down by YYYY-MM."""
+        monthly: dict = {}
+        for t in self.trades:
+            try:
+                key = t.exit_time.strftime("%Y-%m") if hasattr(t.exit_time, 'strftime') else str(t.exit_time)[:7]
+                monthly[key] = round(monthly.get(key, 0.0) + t.pnl, 2)
+            except Exception:
+                pass
+        return dict(sorted(monthly.items()))
+
+    def extended_summary(self) -> dict:
+        """Full metrics dict including monthly breakdown."""
+        base = self.summary()
+        base["monthly_returns"] = self.monthly_returns
+        return base
 
     def trade_log_df(self) -> pd.DataFrame:
         return pd.DataFrame([{
@@ -186,3 +240,35 @@ class Backtester:
             results.append(result)
             start += test_bars
         return results
+
+
+def monte_carlo_backtest(result: BacktestResult, n_iterations: int = 1000) -> dict:
+    """
+    Monte Carlo simulation — randomly reorders the trade sequence to estimate
+    the range of possible outcomes given the same set of trades.
+    Returns distribution stats on ending equity across all iterations.
+    """
+    if not result.trades:
+        return {}
+    pnls = [t.pnl for t in result.trades]
+    ending_equities = []
+    for _ in range(n_iterations):
+        shuffled = list(pnls)
+        np.random.shuffle(shuffled)
+        equity = result.starting_capital
+        for pnl in shuffled:
+            equity += pnl
+        ending_equities.append(equity)
+
+    eq_arr = np.array(ending_equities)
+    return {
+        "n_iterations": n_iterations,
+        "mean_ending_equity": round(float(eq_arr.mean()), 2),
+        "median_ending_equity": round(float(np.median(eq_arr)), 2),
+        "p5_worst_case": round(float(np.percentile(eq_arr, 5)), 2),
+        "p95_best_case": round(float(np.percentile(eq_arr, 95)), 2),
+        "probability_of_profit": round(float((eq_arr > result.starting_capital).mean() * 100), 1),
+        "expected_return_pct": round(
+            float((eq_arr.mean() - result.starting_capital) / result.starting_capital * 100), 2
+        ),
+    }

@@ -44,6 +44,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     'drawdown_pct': 0.0,
   };
 
+  Map<String, dynamic> _regime = {'regime': 'UNKNOWN', 'confidence': 0.0, 'adx': 0.0, 'atr_pct': 0.0};
+
   List<dynamic> _positions = [];
   List<dynamic> _events = [];
   List<dynamic> _tradeHistory = [];
@@ -128,12 +130,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         _isConnecting = false;
         if (type == 'INITIAL_STATE') {
           _status = Map<String, dynamic>.from(data['status'] ?? {});
+          _regime = Map<String, dynamic>.from(data['regime'] ?? {});
           _positions = List<dynamic>.from(data['positions'] ?? []);
           _events = List<dynamic>.from(data['recent_events'] ?? []);
           _tradeHistory = List<dynamic>.from(data['trade_history'] ?? []);
           _systemMode = data['system_mode'] ?? 'PAPER';
         } else if (type == 'STATUS_UPDATE') {
           _status = Map<String, dynamic>.from(data['status'] ?? {});
+          _regime = Map<String, dynamic>.from(data['regime'] ?? {});
           _positions = List<dynamic>.from(data['positions'] ?? []);
           _tradeHistory = List<dynamic>.from(data['trade_history'] ?? []);
         } else if (type == 'TRADE_EVENT') {
@@ -393,6 +397,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSystemWarnings(),
+          _buildRegimeCard(),
+          const SizedBox(height: 12),
           _buildSectionHeader('System Summary'),
           const SizedBox(height: 12),
           _buildStatsGrid(),
@@ -566,56 +572,32 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   // ── System Warnings ──────────────────────────────────────────────────────
 
   Widget _buildSystemWarnings() {
-    final isKill = _status['kill_switch_active'] == true;
-    final isHard = _status['hard_stop'] == true;
-    final isShut = _status['shutdown_for_day'] == true;
-    final cooldown = _status['cooldown_until'] as String?;
-
-    bool blocked = isKill || isHard || isShut;
-    if (!blocked && cooldown != null) {
-      try {
-        if (DateTime.now().isBefore(DateTime.parse(cooldown))) {
-          blocked = true;
-        }
-      } catch (_) {}
+    final List<Widget> warnings = [];
+    if (_status['kill_switch_active'] == true) {
+      warnings.add(_buildAlertBanner('KILL SWITCH ACTIVE', 'Trading is fully halted.', Colors.red));
     }
-    if (!blocked) {
-      return const SizedBox.shrink();
+    if (_status['shutdown_for_day'] == true) {
+      warnings.add(_buildAlertBanner('SHUTDOWN FOR DAY', _status['shutdown_reason'] ?? '', Colors.orange));
     }
-
-    String title = 'TRADING PAUSED';
-    String msg = '';
-    if (isKill) {
-      title = '🔴 EMERGENCY STOP ACTIVE';
-      msg = 'Kill switch file detected. No new trades until removed manually.';
-    } else if (isHard) {
-      title = '🚨 MAX DRAWDOWN BREACHED';
-      msg = 'System locked. Manual review required before resuming.';
-    } else if (isShut) {
-      title = '🔒 DAILY LIMIT HIT';
-      final reason = _status['shutdown_reason'] as String? ?? '';
-      msg = 'Daily circuit breaker triggered. ${reason.isNotEmpty ? "Reason: $reason" : ""}';
-    } else if (cooldown != null) {
-      title = '⏳ COOLDOWN ACTIVE';
-      try {
-        final rem = DateTime.parse(cooldown).difference(DateTime.now()).inMinutes;
-        msg = 'Max consecutive losses hit. Resuming in $rem min.';
-      } catch (_) {
-        msg = 'Consecutive loss cooldown active.';
-      }
+    if (_status['hard_stop'] == true) {
+      warnings.add(_buildAlertBanner('HARD STOP', 'Max drawdown breached. Manual review required.', Colors.red));
     }
+    if (warnings.isEmpty) return const SizedBox.shrink();
+    return Column(children: [...warnings, const SizedBox(height: 16)]);
+  }
 
+  Widget _buildAlertBanner(String title, String message, Color color) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.8)),
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 22),
+          Icon(Icons.warning_amber_rounded, color: color),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -623,12 +605,91 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 12),
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 2),
-                Text(msg, style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                if (message.isNotEmpty) const SizedBox(height: 4),
+                if (message.isNotEmpty) Text(message, style: TextStyle(color: color.withOpacity(0.8), fontSize: 12)),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegimeCard() {
+    final regime = _regime['regime'] ?? 'UNKNOWN';
+    final conf = _num(_regime['confidence']) * 100;
+    final adx = _num(_regime['adx']);
+    final atr = _num(_regime['atr_pct']);
+
+    Color rColor = Colors.grey;
+    IconData rIcon = Icons.help_outline;
+    if (regime == 'TRENDING_UP') {
+      rColor = Colors.green;
+      rIcon = Icons.trending_up;
+    } else if (regime == 'TRENDING_DOWN') {
+      rColor = Colors.red;
+      rIcon = Icons.trending_down;
+    } else if (regime == 'HIGH_VOLATILITY') {
+      rColor = Colors.orange;
+      rIcon = Icons.warning_amber;
+    } else if (regime == 'LOW_VOLATILITY') {
+      rColor = Colors.blueGrey;
+      rIcon = Icons.waves;
+    } else if (regime.contains('GAP')) {
+      rColor = Colors.purple;
+      rIcon = Icons.open_in_browser;
+    } else if (regime == 'NEWS_DRIVEN') {
+      rColor = Colors.redAccent;
+      rIcon = Icons.newspaper;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF151C2C),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: rColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: rColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            child: Icon(rIcon, color: rColor, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'MARKET REGIME',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.5),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  regime.replaceAll('_', ' '),
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Conf: ${conf.toStringAsFixed(0)}% | ADX: ${adx.toStringAsFixed(1)} | ATR: ${atr.toStringAsFixed(1)}%',
+                style: TextStyle(color: Colors.grey[400], fontSize: 12, fontFamily: 'JetBrains Mono'),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: 150,
+                child: LinearProgressIndicator(value: conf / 100.0, backgroundColor: Colors.white10, valueColor: AlwaysStoppedAnimation<Color>(rColor), minHeight: 4),
+              ),
+            ],
           ),
         ],
       ),
@@ -648,8 +709,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     final tp = _num(pos['take_profit']);
     final qty = _int(pos['quantity']);
     final symbol = pos['symbol'] ?? '';
-    final strategy = (pos['strategy_name'] ?? '').toString().replaceAll('_', ' ');
-    final entryTimeStr = _fmtTime(pos['entry_time'] as String?);
     final underlying = pos['underlying_symbol'] as String?;
     final breakeven = pos['breakeven_applied'] == true;
     final partial = pos['partial_booked'] == true;
@@ -700,7 +759,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text('$strategy · ${entryTimeStr.isNotEmpty ? "In at $entryTimeStr" : ""} · Qty: $qty', style: const TextStyle(fontSize: 10, color: Colors.white38)),
+                    Text('Age: ${_fmtTime(pos['entry_time'])}', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
                   ],
                 ),
               ),
@@ -717,7 +776,37 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          // Strategy & Confidence row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+                child: Text(
+                  pos['strategy_name'] ?? 'Unknown',
+                  style: TextStyle(color: Colors.grey[300], fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const Spacer(),
+              if (pos.containsKey('trade_score')) ...[
+                Text(
+                  'Score: ${pos['trade_score']}/100',
+                  style: TextStyle(color: Colors.blue[300], fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Conf: ${(_num(pos['confidence_score']) * 100).toStringAsFixed(0)}%',
+                  style: TextStyle(color: Colors.purple[300], fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ],
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: Colors.white10),
+          ),
 
           // SL → Current → TP progress bar
           Column(
