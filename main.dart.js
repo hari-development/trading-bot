@@ -41228,7 +41228,7 @@ if(r.$2(a,j)>0){s[b]=j
 b=o}}s[b]=a}}
 A.xd.prototype={
 ao(){var s=t.N,r=t.z
-return new A.CO(A.av(["equity",2e4,"starting_equity",2e4,"realized_pnl_today",0,"trades_today",0,"winning_trades",0,"losing_trades",0,"win_rate_pct",0,"avg_profit",0,"avg_loss",0,"consecutive_losses",0,"consecutive_wins",0,"cooldown_until",null,"shutdown_for_day",!1,"shutdown_reason","","hard_stop",!1,"kill_switch_active",!1,"drawdown_pct",0],s,r),A.av(["regime","UNKNOWN","confidence",0,"adx",0,"atr_pct",0],s,r),[],[],[],null,null)}}
+return new A.CO(A.av(["equity",25e3,"starting_equity",25e3,"realized_pnl_today",0,"trades_today",0,"winning_trades",0,"losing_trades",0,"win_rate_pct",0,"avg_profit",0,"avg_loss",0,"consecutive_losses",0,"consecutive_wins",0,"cooldown_until",null,"shutdown_for_day",!1,"shutdown_reason","","hard_stop",!1,"kill_switch_active",!1,"drawdown_pct",0],s,r),A.av(["regime","UNKNOWN","confidence",0,"adx",0,"atr_pct",0],s,r),[],[],[],null,null)}}
 A.CO.prototype={
 aC(){var s,r=this
 r.aR()
@@ -41359,7 +41359,7 @@ h=g.Q.length
 return A.axN(A.d0(A.c([e,m,B.lq,l,B.lq,p,B.zt,j,B.zt,k,B.lq,h===0?g.LR("No open positions \u2014 scanning watchlist\u2026"):A.awz(new A.ah9(g),h,f,B.uJ,new A.aha(),!0),B.Qm],i),B.ag,B.x,B.v),f,B.ao,B.ny,f,B.ay)},
 a4b(){var s=this,r=null,q=s.C6("Trade History",""+s.at.length+" closed trades today"),p=s.at.length
 return A.d0(A.c([new A.bB(B.G_,q,r),A.hr(p===0?A.i_(s.LR("No closed trades yet today."),r,r):A.awz(new A.ahg(s),p,B.FY,r,new A.ahh(),!1),1)],t.p),B.C,B.x,B.v)},
-a45(){var s=this,r={},q=s.e0(s.y.h(0,"realized_pnl_today")),p=s.Ee(s.y.h(0,"equity"),2e4),o=s.Ee(s.y.h(0,"starting_equity"),2e4),n=s.e0(s.y.h(0,"win_rate_pct")),m=s.e0(s.y.h(0,"drawdown_pct")),l=s.pf(s.y.h(0,"consecutive_losses")),k=s.pf(s.y.h(0,"trades_today")),j=s.Q,i=j.length
+a45(){var s=this,r={},q=s.e0(s.y.h(0,"realized_pnl_today")),p=s.Ee(s.y.h(0,"equity"),25e3),o=s.Ee(s.y.h(0,"starting_equity"),25e3),n=s.e0(s.y.h(0,"win_rate_pct")),m=s.e0(s.y.h(0,"drawdown_pct")),l=s.pf(s.y.h(0,"consecutive_losses")),k=s.pf(s.y.h(0,"trades_today")),j=s.Q,i=j.length
 r.a=0
 if(o>0)r.a=B.b.mw(j,0,new A.ahe(s))/o*100
 return A.aHf(new A.ahf(r,s,p,q>=0,q,n,m,k,i,l))},
